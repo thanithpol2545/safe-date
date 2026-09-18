@@ -1,88 +1,128 @@
-# Safe Date: Hospital Verified Health x ZKV Privacy Dating App
-### (แอปพลิเคชันหาคู่ที่ขับเคลื่อนด้วยสุขภาพ ความโปร่งใส และความเป็นส่วนตัวขั้นสูง)
+# SafeDate
 
-Safe Date เป็นแอปพลิเคชันหาคู่มิติใหม่ที่ผสานระหว่าง **Dating Experience** (ความตื่นเต้น ความรัก ความผูกพัน) และ **Healthcare Trust** (ความสะอาด ความถูกต้องทางการแพทย์ และความปลอดภัยของข้อมูลตามกฎหมาย PDPA) โดยใช้เทคโนโลยี **Zero-Knowledge Verification (ZKV)** และการเชื่อมโยงระบบโรงพยาบาลผ่านมาตรฐาน **HL7 FHIR API**
+แอปหาคู่ที่ยืนยันผลตรวจสุขภาพจากโรงพยาบาลจริงผ่าน Zero-Knowledge Verification
 
----
-
-## 🌟 จุดเด่นของระบบ (Core Features)
-
-### 1. Zero-Knowledge Health Verification (ZKV) & PDPA Compliance
-- **ไม่มีการเก็บเวชระเบียนบนเซิร์ฟเวอร์**: Safe Date ไม่เคยบันทึกประวัติการรักษา ผลเลือด หรือข้อมูลไวรัสของผู้ใช้
-- **Boolean Logic Handshake**: ระบบของโรงพยาบาลพันธมิตรประมวลผลผลการตรวจและส่งกลับเฉพาะผลลัพธ์เชิงตรรกะแบบเข้ารหัส (`isVerified = true/false` พร้อม Hashes)
-- **สอดคล้องกับ พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)**: ผู้ใช้ต้องให้ความยินยอมโดยชัดแจ้ง (Explicit Consent) และยึดหลัก Data Minimization ทุกขั้นตอน
-
-### 2. Verified Clinical Tier & 180-Day Tier Decay Engine
-- ⚪ **Unverified**: ผู้ใช้ใหม่หรือผลตรวจหมดอายุเกิน 6 เดือน
-- 🥉 **Bronze**: ผ่านการตรวจคัดกรองเบื้องต้น (HIV Ag/Ab, Syphilis) ภายใน 6 เดือน
-- 🥈 **Silver**: ตรวจคัดกรองสม่ำเสมอทุก 3–6 เดือนตามเกณฑ์มาตรฐาน CDC
-- 🥇 **Gold / Platinum**: ตรวจ Multiplex PCR 28 เชื้อ + ฉีดวัคซีนป้องกันมะเร็งปากมดลูก (HPV 9-Valent) ครบโดส
-- **180-Day Window Period Decay**: นับถอยหลังอายุผลตรวจอัตโนมัติ เพื่อกระตุ้นให้ตรวจซ้ำอย่างปลอดภัยตามหลักระบาดวิทยา
-
-### 3. Hospital E-Voucher Marketplace (No Brokerage Fee)
-- ซื้อ E-Voucher แพ็กเกจตรวจสุขภาพทางเพศกับโรงพยาบาลและคลินิกชั้นนำ (เช่น BDMS Wellness, Bumrungrad, Bangkok Hospital, Pulse Clinic)
-- ได้รับ QR Token เข้ารหัสเพื่อนำไปยื่นตรวจ ณ สถานพยาบาล
-- **ถูกต้องตามข้อบังคับแพทยสภา**: ไม่คิดค่าหัวคิวหรือค่านายหน้าจากการส่งต่อคนไข้ (No Medical Brokerage Fee) รายได้มาจากค่าธรรมเนียมแพลตฟอร์มด้านเทคโนโลยี
-
-### 4. Bilingual Support (TH / EN)
-- สลับภาษาได้ทันทีระหว่างภาษาไทยและภาษาอังกฤษทั้งแอป ด้วยการแตะปุ่มสลับภาษา `TH | EN` บน Top Bar
-
-### 5. Design System: "Warm Teal & Modern Coral"
-- **Deep Teal** (`#0D9488`): สะท้อนความสะอาด ความปลอดภัย และความเชี่ยวชาญทางการแพทย์
-- **Warm Coral** (`#F43F5E`): สื่อถึงความรัก ความตื่นเต้น และเสน่ห์ของ Dating App
-- **Warm Cream** (`#FAF8F5`): พื้นหลังอบอุ่น นุ่มนวล ไม่แข็งกระด้าง
-- ดีไซน์คลีน ปราศจากองค์ประกอบที่รกตา (Clean, Intentional & Human-Centric UI)
+โค้ดชุดเดียว รันได้ทั้ง **Android** และ **iOS** ด้วย Expo (React Native)
 
 ---
 
-## 🏗️ สถาปัตยกรรมระบบ (Architecture)
-
-- **Language**: Kotlin 100%
-- **UI Framework**: Jetpack Compose + Material Design 3 (M3)
-- **Architecture**: MVVM (Model-View-ViewModel) + StateFlow / Coroutines
-- **State Management**: Reactive Single-Source of Truth (`HealthPulseViewModel`, `HealthPulseUiState`)
-- **Visual Assets**: Adaptive Custom Icon, Modern Elevation, High-Contrast Typography
-- **Privacy & Healthcare Standards**: HL7 FHIR Observation Schema, SHA-256 Hash ZKV Proofs
-
----
-
-## 📱 โครงสร้างหน้าจอ (Screens)
-
-1. **Discovery Screen (`/discovery`)**:
-   - การ์ดแนะนำคู่เดทแบบอินเทอร์แอคทีฟ (Swipe / Like / Pass / Rewind)
-   - Badge สถานะสุขภาพที่ยืนยันจาก รพ. จริง
-   - ฟิลเตอร์ค้นหาตามระดับ Clinical Tier
-   - ระบบแจ้งเตือนเมื่อ Match กับผู้ที่ตรวจสุขภาพแล้ว
-
-2. **E-Voucher Marketplace (`/marketplace`)**:
-   - ตลาด E-Voucher แพ็กเกจตรวจคัดกรองกับ รพ. พันธมิตร
-   - ตรวจสอบราคา เวลาทราบผล และการรับรองความถูกต้อง
-   - ระบบจำลองการชำระเงินและออก Dynamic QR Token
-
-3. **My Badge (`/my_badge`)**:
-   - ตรวจสอบระดับ Badge ของตนเอง และเวลานับถอยหลัง 180 วัน
-   - คำอธิบายด้านระบาดวิทยา (Window Period & Screening Intervals)
-   - สิทธิประโยชน์ของแต่ละ Tier และปุ่มต่ออายุ
-
-4. **ZKV & FHIR Gateway (`/zkv`)**:
-   - คอนโซลจำลองการทดสอบเชื่อมต่อ HL7 FHIR REST API กับ รพ.
-   - บันทึกการทำ ZKV Cryptographic Handshake
-   - การควบคุมความยินยอม PDPA & Data Minimization
-
----
-
-## 🛠️ วิธีการรันโปรเจกต์ (Build & Run)
+## รันโปรเจกต์
 
 ```bash
-# คอมไพล์โปรเจกต์
-gradle assembleDebug
+npm install
+npx expo start
+```
 
-# ตรวจสอบ Unit Test
-gradle :app:testDebugUnitTest
+สแกน QR ด้วยแอป **Expo Go** (มีทั้ง Play Store และ App Store) หรือ
+
+```bash
+npx expo start --android
+npx expo start --ios       # ต้องมี Xcode
+npx expo start --web
+```
+
+### Build ขึ้นสโตร์
+
+```bash
+npm install -g eas-cli
+eas login
+eas build:configure
+eas build -p android --profile production   # .aab สำหรับ Play Store
+eas build -p ios --profile production       # .ipa สำหรับ App Store
+```
+
+iOS build ทำผ่าน EAS ได้แม้ไม่มีเครื่อง Mac เพราะ build บนเครื่องของ Expo
+
+---
+
+## ฟีเจอร์
+
+### 1. Zero-Knowledge Health Verification
+
+เซิร์ฟเวอร์ไม่เก็บเวชระเบียน ผลเลือด หรือค่าผลตรวจใดๆ โรงพยาบาลพันธมิตรประมวลผลฝั่งตัวเอง
+แล้วส่งกลับเฉพาะ `isVerified: true/false` พร้อม hash ที่ไม่ระบุตัวตน
+หน้า **ZKV & FHIR** เป็นคอนโซลจำลองการ handshake พร้อมแสดง payload ที่ส่งกลับจริง
+
+ยึดหลัก PDPA ตลอดสาย: explicit consent ก่อนดึงข้อมูลทุกครั้ง และ data minimization
+ขอกลับมาเฉพาะ boolean
+
+### 2. Clinical Tier + นาฬิกา 180 วัน
+
+| Tier | เกณฑ์ | สิทธิ์ |
+|---|---|---|
+| ⚪ Unverified | ผู้ใช้ใหม่ หรือผลหมดอายุ | ปัดขวา 10 ครั้ง/วัน |
+| 🥉 Bronze | HIV Ag/Ab, ซิฟิลิส, HBsAg | ปัดขวาไม่จำกัด + rewind |
+| 🥈 Silver | 14 เชื้อ รอบ 3–6 เดือนตาม CDC | Boost 2x + กรอง verified |
+| 🥇 Gold | Multiplex DNA PCR 28 เชื้อ | Priority match + ส่วนลดคลินิก |
+| 💎 Platinum | PCR 28 + วัคซีน HPV 9 สายพันธุ์ครบโดส | ทุกสิทธิ์ + อันดับแรกสุด |
+
+Badge หมดอายุใน 180 วันแล้วตกกลับเป็น Unverified โดยอัตโนมัติ
+เพราะ HIV มี window period ได้ถึง 3 เดือนบนชุดตรวจรุ่นที่ 4 ผลตรวจจึงบอกอดีต ไม่ใช่ปัจจุบัน
+การให้ badge หมดอายุคือสิ่งที่กันไม่ให้ badge ถูกอ่านเป็นคำรับประกัน
+
+### 3. E-Voucher Marketplace
+
+ซื้อแพ็กเกจตรวจกับ รพ. พันธมิตร ได้ QR token ไปยื่นที่เคาน์เตอร์ ผลส่งกลับเข้าแอปผ่าน FHIR
+
+หน้าซื้อแสดงโครงสร้างราคาแยกให้เห็นว่าเงินไปไหน: ค่าตรวจที่จ่ายให้สถานพยาบาล
+กับค่าธรรมเนียมแพลตฟอร์ม SafeDate ไม่เก็บค่าหัวคิวจากการส่งต่อคนไข้ ตามข้อบังคับแพทยสภา
+
+มีแพ็กเกจตรวจ HIV ฟรีของคลินิกนิรนามสภากาชาดไทยอยู่ในรายการด้วย
+คนที่จ่ายไม่ไหวยังเข้าถึง badge ระดับแรกได้
+
+### 4. แชทพร้อม safety card
+
+ทุกห้องแชทเปิดด้วยการ์ดยืนยันสุขภาพร่วมกันของทั้งสองฝ่าย และมีปุ่มชวนเดตในที่สาธารณะ
+
+### 5. สองภาษา TH / EN
+
+สลับทั้งแอปด้วยปุ่ม `TH | EN` บน top bar
+
+### 6. Design System "Warm Teal & Modern Coral"
+
+| บทบาท | สี |
+|---|---|
+| Primary | `#0D9488` / `#0F766E` |
+| Secondary | `#F43F5E` / `#FB7185` |
+| Background | `#FAF8F5` |
+| Surface | `#FFFFFF` / `#F5F2EB` |
+| Text | `#1E293B` / `#334155` |
+
+Teal คุมทุกส่วนที่เกี่ยวกับการแพทย์และ marketplace, Coral อยู่เฉพาะปุ่ม like กับ badge แจ้งเตือน
+เพื่อไม่ให้ความรู้สึกแบบแอปหาคู่ไปลดทอนความน่าเชื่อถือของส่วนผลตรวจ
+
+---
+
+## โครงไฟล์
+
+```
+App.js                        shell + แท็บล่าง + ปุ่มสลับภาษา
+src/theme.js                  design tokens, นิยาม tier, TIER_DECAY_DAYS
+src/i18n.js                   สตริง TH/EN + LangProvider + pick()
+src/store.js                  state กลางทั้งแอป (พอร์ตจาก HealthPulseViewModel)
+src/data.js                   ข้อมูลสาธิต — แทนที่ด้วย API ได้เลย
+src/components/ui.js          TierBadge, Avatar, Button, Card, Chip, Checkbox, Sheet, Toast
+src/screens/DiscoveryScreen   ปัดการ์ด, ฟิลเตอร์ tier, โควตา like, match dialog
+src/screens/ChatsScreen       รายการแชท + ห้องแชท + safety card
+src/screens/MarketplaceScreen แพ็กเกจ, โครงสร้างราคา, QR voucher
+src/screens/MyBadgeScreen     สถานะ badge, นาฬิกา 180 วัน, สิทธิ์แต่ละ tier, ความเป็นส่วนตัว
+src/screens/ZkvScreen         คอนโซล ZKV/FHIR + log การตรวจสอบ
+legacy-android/               โปรเจกต์ Kotlin + Jetpack Compose เดิม (Android เท่านั้น)
 ```
 
 ---
 
-## 📄 ใบอนุญาตและความปลอดภัย (Compliance & Privacy)
-- ข้อมูลผลการตรวจเป็นทรัพย์สินส่วนบุคคลของผู้ใช้และโรงพยาบาลผู้ตรวจ
-- Safe Date เป็นระบบตัวกลางยืนยันความถูกต้องผ่าน ZKV เท่านั้น
+## ยังต้องต่อฝั่งหลังบ้าน
+
+- Auth — แนะนำ OTP เบอร์โทร และยืนยันตัวตนด้วยบัตรประชาชนสำหรับ tier สูง
+- FHIR gateway จริง: OAuth 2.0 client credentials ต่อ HIS ของแต่ละโรงพยาบาล
+- เก็บ consent log ทุกครั้งที่มีการเปิดเผยสถานะ พร้อม timestamp และขอบเขต
+- Chat realtime (Firebase, Supabase หรือ WebSocket ของตัวเอง)
+- Payment gateway สำหรับ E-Voucher (Omise, 2C2P, GBPrime)
+- QR จริงด้วย `react-native-qrcode-svg` — ตอนนี้เป็น placeholder ที่ render จาก token
+- Job ตัดรอบ 180 วัน พร้อม push notification เตือนก่อนหมดอายุ
+
+## ข้อควรระวังด้านผลิตภัณฑ์
+
+Badge บอกว่า "ตรวจแล้วเมื่อวันนั้น ผลเป็นลบ" ไม่ได้บอกว่า "ปลอดภัยตอนนี้"
+ข้อความในแอปต้องไม่พูดเกินกว่านี้ และไม่ควรมีคำว่า "ปลอดภัย 100%" อยู่ในหน้าจอไหนเลย
