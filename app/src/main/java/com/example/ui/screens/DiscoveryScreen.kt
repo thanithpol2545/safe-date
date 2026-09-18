@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.BadgeTier
 import com.example.model.UserProfile
 import com.example.ui.HealthPulseUiState
@@ -54,7 +56,8 @@ fun DiscoveryScreen(
         TierFilterBar(
             selectedTier = state.tierFilter,
             onSelectTier = { viewModel.setTierFilter(it) },
-            myTier = state.myTier
+            myTier = state.myTier,
+            language = state.language
         )
 
         Box(
@@ -69,6 +72,7 @@ fun DiscoveryScreen(
                 DiscoveryCard(
                     profile = profile,
                     myTier = state.myTier,
+                    language = state.language,
                     onLike = { viewModel.likeCurrentProfile() },
                     onPass = { viewModel.passCurrentProfile() },
                     onRewind = { viewModel.rewindProfile() }
@@ -76,6 +80,7 @@ fun DiscoveryScreen(
             } else {
                 EmptyDiscoveryView(
                     tierFilter = state.tierFilter,
+                    language = state.language,
                     onResetFilter = { viewModel.setTierFilter(null) }
                 )
             }
@@ -100,6 +105,8 @@ fun DiscoveryScreen(
         MatchSuccessDialog(
             matchedProfile = state.matchedProfile,
             myTier = state.myTier,
+            language = state.language,
+            onStartChat = { viewModel.startChatWithMatchedProfile() },
             onDismiss = { viewModel.dismissMatchDialog() }
         )
     }
@@ -109,7 +116,8 @@ fun DiscoveryScreen(
 private fun TierFilterBar(
     selectedTier: BadgeTier?,
     onSelectTier: (BadgeTier?) -> Unit,
-    myTier: BadgeTier
+    myTier: BadgeTier,
+    language: AppLanguage
 ) {
     Row(
         modifier = Modifier
@@ -121,7 +129,7 @@ private fun TierFilterBar(
         FilterChip(
             selected = selectedTier == null,
             onClick = { onSelectTier(null) },
-            label = { Text("ทั้งหมด", style = MaterialTheme.typography.labelMedium) },
+            label = { Text(AppStrings.filterAll(language), style = MaterialTheme.typography.labelMedium) },
             colors = FilterChipDefaults.filterChipColors(
                 selectedContainerColor = DeepTealPrimary.copy(alpha = 0.15f),
                 selectedLabelColor = DeepTealDark
@@ -143,7 +151,10 @@ private fun TierFilterBar(
                     Text(tier.emoji, fontSize = 12.sp)
                 },
                 label = {
-                    Text(tier.shortName, style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        if (language == AppLanguage.TH) tier.shortName else tier.name.replace("_", "/"),
+                        style = MaterialTheme.typography.labelMedium
+                    )
                 },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = tier.bgColor,
@@ -159,6 +170,7 @@ private fun TierFilterBar(
 private fun DiscoveryCard(
     profile: UserProfile,
     myTier: BadgeTier,
+    language: AppLanguage,
     onLike: () -> Unit,
     onPass: () -> Unit,
     onRewind: () -> Unit
@@ -231,7 +243,7 @@ private fun DiscoveryCard(
                             Text(profile.badgeTier.emoji, fontSize = 16.sp)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = profile.badgeTier.title,
+                                text = profile.badgeTier.getLocalizedTitle(language),
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp
@@ -260,7 +272,7 @@ private fun DiscoveryCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${profile.distanceKm} กม.",
+                            text = AppStrings.kmAway(profile.distanceKm, language),
                             color = Color.White,
                             fontSize = 12.sp
                         )
@@ -290,7 +302,7 @@ private fun DiscoveryCard(
                             if (profile.badgeTier != BadgeTier.UNVERIFIED) {
                                 Icon(
                                     Icons.Filled.Verified,
-                                    contentDescription = "Verified Health Badge",
+                                    contentDescription = AppStrings.verifiedHealthBadge(language),
                                     tint = profile.badgeTier.color,
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -326,7 +338,7 @@ private fun DiscoveryCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = profile.partnerClinicName ?: "สถานพยาบาลพันธมิตร",
+                                    text = profile.partnerClinicName ?: if (language == AppLanguage.TH) "สถานพยาบาลพันธมิตร" else "Partner Medical Center",
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = profile.badgeTier.color
@@ -335,7 +347,7 @@ private fun DiscoveryCard(
 
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "📅 เข้ารับการตรวจเมื่อ: ${profile.lastTestedDate}",
+                                text = AppStrings.verifiedAt(profile.partnerClinicName ?: "", profile.lastTestedDate, language),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -343,7 +355,7 @@ private fun DiscoveryCard(
 
                             profile.screeningPackageName?.let { pkg ->
                                 Text(
-                                    text = "🔬 แพ็กเกจ: $pkg",
+                                    text = AppStrings.verifiedPackage(pkg, language),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -367,7 +379,10 @@ private fun DiscoveryCard(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "การแสดงผลระบุตามวันตรวจจริง ไม่มีคำกล่าวอ้างว่าปราศจากเชื้อ 100% ตามหลักระบาดวิทยา (Window Period)",
+                                        text = if (language == AppLanguage.TH)
+                                            "การแสดงผลระบุตามวันตรวจจริง ไม่มีคำกล่าวอ้างว่าปราศจากเชื้อ 100% ตามหลักระบาดวิทยา (Window Period)"
+                                        else
+                                            "Screening reflects test date strictly. No 100% immunity claims per clinical window period science.",
                                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         lineHeight = 15.sp
@@ -396,7 +411,7 @@ private fun DiscoveryCard(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "ผู้ใช้นี้ยังไม่มีข้อมูลการตรวจสุขภาพในระบบ Safe Date หรือผลตรวจเดิมหมดอายุเกิน 6 เดือนแล้ว",
+                                text = AppStrings.unverifiedNotice(language),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = SlateGreyBody
                             )
@@ -408,7 +423,7 @@ private fun DiscoveryCard(
 
                 // Bio
                 Text(
-                    text = "เกี่ยวกับฉัน",
+                    text = AppStrings.aboutMe(language),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -424,7 +439,7 @@ private fun DiscoveryCard(
 
                 // Interests
                 Text(
-                    text = "ความสนใจ",
+                    text = AppStrings.interests(language),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -548,6 +563,7 @@ private fun ActionControlsRow(
 @Composable
 private fun EmptyDiscoveryView(
     tierFilter: BadgeTier?,
+    language: AppLanguage,
     onResetFilter: () -> Unit
 ) {
     Column(
@@ -565,13 +581,17 @@ private fun EmptyDiscoveryView(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "ดูโปรไฟล์ครบในฟิลเตอร์นี้แล้ว",
+            text = AppStrings.emptyDiscoveryTitle(language),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = if (tierFilter != null) "ลองรีเซ็ตฟิลเตอร์ ${tierFilter.title} เพื่อดูโปรไฟล์อื่นๆ" else "ระบบจะแนะนำโปรไฟล์ใหม่เมื่อมีผู้เข้ารับการตรวจยืนยันเพิ่มขึ้น",
+            text = AppStrings.emptyDiscoverySub(
+                hasFilter = tierFilter != null,
+                tierName = tierFilter?.getLocalizedTitle(language) ?: "",
+                lang = language
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -581,7 +601,7 @@ private fun EmptyDiscoveryView(
             onClick = onResetFilter,
             modifier = Modifier.testTag("button_reset_filter")
         ) {
-            Text("ดูโปรไฟล์ทั้งหมด")
+            Text(AppStrings.resetFilterButton(language))
         }
     }
 }
@@ -590,6 +610,8 @@ private fun EmptyDiscoveryView(
 private fun MatchSuccessDialog(
     matchedProfile: UserProfile,
     myTier: BadgeTier,
+    language: AppLanguage,
+    onStartChat: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -609,7 +631,7 @@ private fun MatchSuccessDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "🎉 IT'S A HEALTHY MATCH! 🎉",
+                    text = AppStrings.matchSuccessTitle(language),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
                     color = WarmCoral
@@ -659,7 +681,7 @@ private fun MatchSuccessDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "คุณและ ${matchedProfile.name} แมตช์กันสำเร็จ!",
+                    text = AppStrings.matchSuccessBody(matchedProfile.name, language),
                     style = MaterialTheme.typography.titleSmall,
                     color = SlateGreyText,
                     fontWeight = FontWeight.Bold
@@ -668,7 +690,7 @@ private fun MatchSuccessDialog(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "ทั้งสองฝ่ายผ่านการยืนยันสุขภาพจากสถานพยาบาลพันธมิตรด้วยมาตรฐานความปลอดภัยสูง",
+                    text = AppStrings.matchSuccessHealthNote(language),
                     style = MaterialTheme.typography.bodySmall,
                     color = SlateGreyMuted,
                     textAlign = TextAlign.Center
@@ -677,13 +699,32 @@ private fun MatchSuccessDialog(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = onDismiss,
+                    onClick = onStartChat,
                     colors = ButtonDefaults.buttonColors(containerColor = WarmCoral),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("start_chat_button")
+                ) {
+                    Icon(
+                        Icons.Filled.Favorite,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(AppStrings.startChatButton(language), color = Color.White, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onDismiss,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("dismiss_match_button")
                 ) {
-                    Text("เริ่มบทสนทนาอย่างมั่นใจ", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(AppStrings.keepSwipingButton(language), color = SlateGreyText)
                 }
             }
         }

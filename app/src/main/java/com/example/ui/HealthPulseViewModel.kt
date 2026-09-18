@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter
 
 enum class AppTab(val title: String, val iconName: String) {
     DISCOVERY("Discovery", "Favorite"),
+    CHATS("Chats", "ChatBubble"),
     MARKETPLACE("E-Vouchers", "LocalHospital"),
     MY_BADGE("My Badge", "VerifiedUser"),
     ZKV_GATEWAY("ZKV & FHIR", "Security")
@@ -22,11 +23,22 @@ enum class AppTab(val title: String, val iconName: String) {
 
 data class HealthPulseUiState(
     val currentTab: AppTab = AppTab.DISCOVERY,
+    val language: AppLanguage = AppLanguage.TH,
     val profiles: List<UserProfile> = HealthPulseDataSource.mockProfiles,
     val currentProfileIndex: Int = 0,
     val tierFilter: BadgeTier? = null,
     val matchedProfile: UserProfile? = null,
     val isMatchDialogOpen: Boolean = false,
+
+    // Chat & Matching State
+    val matchedProfilesList: List<UserProfile> = listOf(
+        HealthPulseDataSource.mockProfiles[0], // หมอแพรว
+        HealthPulseDataSource.mockProfiles[2]  // มายด์
+    ),
+    val conversations: List<ChatConversation> = HealthPulseDataSource.initialConversations,
+    val activeChatConversation: ChatConversation? = null,
+    val chatDraftMessage: String = "",
+    val isPartnerTyping: Boolean = false,
 
     // Current User Health Status
     val myTier: BadgeTier = BadgeTier.SILVER,
@@ -57,6 +69,17 @@ class HealthPulseViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(HealthPulseUiState())
     val uiState: StateFlow<HealthPulseUiState> = _uiState.asStateFlow()
 
+    fun toggleLanguage() {
+        _uiState.update {
+            val newLang = if (it.language == AppLanguage.TH) AppLanguage.EN else AppLanguage.TH
+            it.copy(language = newLang)
+        }
+    }
+
+    fun setLanguage(language: AppLanguage) {
+        _uiState.update { it.copy(language = language) }
+    }
+
     fun setTab(tab: AppTab) {
         _uiState.update { it.copy(currentTab = tab) }
     }
@@ -72,9 +95,14 @@ class HealthPulseViewModel : ViewModel() {
             val profile = filtered[currentIndex]
             // If liked profile is verified and user is verified, trigger Match Dialog!
             if (profile.badgeTier != BadgeTier.UNVERIFIED && _uiState.value.myTier != BadgeTier.UNVERIFIED) {
+                val currentMatches = _uiState.value.matchedProfilesList.toMutableList()
+                if (currentMatches.none { it.id == profile.id }) {
+                    currentMatches.add(0, profile)
+                }
                 _uiState.update {
                     it.copy(
                         matchedProfile = profile,
+                        matchedProfilesList = currentMatches,
                         isMatchDialogOpen = true,
                         currentProfileIndex = (currentIndex + 1).coerceAtMost(filtered.size)
                     )
@@ -106,6 +134,193 @@ class HealthPulseViewModel : ViewModel() {
 
     fun dismissMatchDialog() {
         _uiState.update { it.copy(isMatchDialogOpen = false, matchedProfile = null) }
+    }
+
+    // Chat Management
+    fun startChatWithMatchedProfile() {
+        val matched = _uiState.value.matchedProfile ?: return
+        openChatWithProfile(matched)
+        _uiState.update {
+            it.copy(
+                isMatchDialogOpen = false,
+                matchedProfile = null,
+                currentTab = AppTab.CHATS
+            )
+        }
+    }
+
+    fun openChatWithProfile(profile: UserProfile) {
+        val currentConvs = _uiState.value.conversations.toMutableList()
+        var existing = currentConvs.find { it.partnerProfile.id == profile.id }
+        if (existing == null) {
+            val clinicName = profile.partnerClinicName ?: "รพ.พันธมิตรเครือข่าย HIS"
+            val newConv = ChatConversation(
+                conversationId = "conv_${profile.id}",
+                partnerProfile = profile,
+                messages = listOf(
+                    ChatMessage(
+                        id = "msg_sys_${System.currentTimeMillis()}",
+                        senderId = "system",
+                        text = "🔒 Mutual Health Verification: คุณ (${_uiState.value.myTier.shortName}) และ ${profile.name} (${profile.badgeTier.shortName}) ต่างผ่านการตรวจสอบผลแล็บทางเวชระเบียนจาก $clinicName ปลอดภัย 100%",
+                        timestamp = "เมื่อสักครู่",
+                        isFromMe = false,
+                        isSystemSafetyCard = true
+                    ),
+                    ChatMessage(
+                        id = "msg_intro_${System.currentTimeMillis()}",
+                        senderId = profile.id,
+                        text = if (_uiState.value.language == AppLanguage.TH)
+                            "ยินดีที่ได้แมตช์นะคะ! ดีใจที่เจอคนที่ให้ความสำคัญกับสุขภาพและความปลอดภัยเหมือนกัน ✨"
+                        else
+                            "Great to match! Love seeing someone who values health and transparency ✨",
+                        timestamp = "เมื่อสักครู่",
+                        isFromMe = false
+                    )
+                ),
+                unreadCount = 0,
+                matchedDate = "วันนี้"
+            )
+            currentConvs.add(0, newConv)
+            existing = newConv
+        } else {
+            existing = existing.copy(unreadCount = 0)
+            val index = currentConvs.indexOfFirst { it.conversationId == existing.conversationId }
+            if (index >= 0) {
+                currentConvs[index] = existing
+            }
+        }
+
+        _uiState.update {
+            it.copy(
+                conversations = currentConvs,
+                activeChatConversation = existing,
+                chatDraftMessage = "",
+                currentTab = AppTab.CHATS
+            )
+        }
+    }
+
+    fun openChatConversation(conv: ChatConversation) {
+        val updatedConvs = _uiState.value.conversations.map {
+            if (it.conversationId == conv.conversationId) it.copy(unreadCount = 0) else it
+        }
+        val target = updatedConvs.find { it.conversationId == conv.conversationId } ?: conv
+        _uiState.update {
+            it.copy(
+                conversations = updatedConvs,
+                activeChatConversation = target,
+                chatDraftMessage = ""
+            )
+        }
+    }
+
+    fun closeChatRoom() {
+        _uiState.update { it.copy(activeChatConversation = null) }
+    }
+
+    fun setChatDraft(text: String) {
+        _uiState.update { it.copy(chatDraftMessage = text) }
+    }
+
+    fun sendCurrentChatMessage() {
+        val draft = _uiState.value.chatDraftMessage.trim()
+        if (draft.isEmpty()) return
+        sendMessage(draft)
+    }
+
+    fun sendSafeDateProposal() {
+        val active = _uiState.value.activeChatConversation ?: return
+        val text = if (_uiState.value.language == AppLanguage.TH)
+            "☕ ชวนไปเดตปลอดภัยที่คาเฟ่ Specialty ในพื้นที่เปิดโล่ง บรรยากาศสบายใจและปลอดภัยทั้งสองฝ่าย"
+        else
+            "☕ Proposed a public safe date at a specialty cafe with open, relaxed ambiance."
+        sendMessage(text = text, isProposal = true)
+    }
+
+    fun sendMessage(text: String, isProposal: Boolean = false) {
+        val active = _uiState.value.activeChatConversation ?: return
+        val myMessage = ChatMessage(
+            id = "msg_me_${System.currentTimeMillis()}",
+            senderId = "me",
+            text = text,
+            timestamp = "เมื่อสักครู่",
+            isFromMe = true,
+            isSafeDateProposal = isProposal
+        )
+
+        val updatedMessages = active.messages + myMessage
+        val updatedConv = active.copy(
+            messages = updatedMessages,
+            unreadCount = 0
+        )
+
+        val updatedConvs = _uiState.value.conversations.map {
+            if (it.conversationId == active.conversationId) updatedConv else it
+        }
+
+        _uiState.update {
+            it.copy(
+                chatDraftMessage = "",
+                activeChatConversation = updatedConv,
+                conversations = updatedConvs
+            )
+        }
+
+        // Simulate partner response
+        viewModelScope.launch {
+            delay(400)
+            _uiState.update { it.copy(isPartnerTyping = true) }
+            delay(1200)
+            _uiState.update { it.copy(isPartnerTyping = false) }
+
+            val replyText = if (isProposal) {
+                if (_uiState.value.language == AppLanguage.TH) {
+                    "ยินดีมากๆ ค่ะ! ชอบนัดเจอที่คาเฟ่เปิดโล่งแบบนี้ สบายใจและปลอดภัยดีค่ะ เดี๋ยวส่งพิกัดร้านโปรดแถวนั้นให้นะคะ ☕✨"
+                } else {
+                    "I'd love that! Meeting in a bright public cafe sounds super comfortable and safe. Let me pick a nice spot! ☕✨"
+                }
+            } else {
+                when {
+                    text.contains("วิ่ง", ignoreCase = true) || text.contains("run", ignoreCase = true) -> {
+                        if (_uiState.value.language == AppLanguage.TH) "ใช่เลยค่ะ ปกติวิ่งเพซสบายๆ 6:30 อากาศดีมาก ไว้ไปวิ่งด้วยกันนะคะ 🏃‍♀️" else "Yes! I usually jog at a relaxed pace, great weather lately! 🏃‍♀️"
+                    }
+                    text.contains("กาแฟ", ignoreCase = true) || text.contains("coffee", ignoreCase = true) || text.contains("cafe", ignoreCase = true) -> {
+                        if (_uiState.value.language == AppLanguage.TH) "มีร้านแถวสุขุมวิทกาแฟดีมาก เมล็ดคั่วกลางหอมกลิ่นดอกไม้ ชวนไปชิมได้เลยค่ะ ☕" else "I know a cozy spot with superb pour-over coffee, would love to show you! ☕"
+                    }
+                    text.contains("ตรวจ", ignoreCase = true) || text.contains("health", ignoreCase = true) || text.contains("badge", ignoreCase = true) -> {
+                        if (_uiState.value.language == AppLanguage.TH) "เห็นด้วยมากๆ ค่ะ การตรวจและเปิดเผยผ่านระบบ ZKV ทำให้คุยกันได้อย่างสบายใจ ไร้กังวลจริงๆ ค่ะ 👍" else "Totally agree! ZKV verification makes dating so refreshing and reassuring 👍"
+                    }
+                    else -> {
+                        if (_uiState.value.language == AppLanguage.TH) {
+                            "น่าสนใจมากค่ะ! ยินดีที่ได้คุยกันนะคะ มีอะไรแนะนำหรืออยากแลกเปลี่ยนอีกไหมคะ 😊"
+                        } else {
+                            "Sounds wonderful! Really enjoying our conversation, what else do you like to do on weekends? 😊"
+                        }
+                    }
+                }
+            }
+
+            val partnerMessage = ChatMessage(
+                id = "msg_partner_${System.currentTimeMillis()}",
+                senderId = active.partnerProfile.id,
+                text = replyText,
+                timestamp = "เมื่อสักครู่",
+                isFromMe = false
+            )
+
+            val finalMessages = updatedConv.messages + partnerMessage
+            val finalConv = updatedConv.copy(messages = finalMessages)
+            val finalConvs = _uiState.value.conversations.map {
+                if (it.conversationId == finalConv.conversationId) finalConv else it
+            }
+
+            _uiState.update {
+                it.copy(
+                    activeChatConversation = if (it.activeChatConversation?.conversationId == finalConv.conversationId) finalConv else it.activeChatConversation,
+                    conversations = finalConvs
+                )
+            }
+        }
     }
 
     // E-Voucher Purchase

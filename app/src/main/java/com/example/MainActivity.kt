@@ -25,9 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.clickable
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.BadgeTier
 import com.example.ui.AppTab
 import com.example.ui.HealthPulseViewModel
+import com.example.ui.screens.ChatScreen
 import com.example.ui.screens.DiscoveryScreen
 import com.example.ui.screens.MarketplaceScreen
 import com.example.ui.screens.MyBadgeScreen
@@ -99,6 +103,41 @@ fun HealthPulseApp(
                     }
                 },
                 actions = {
+                    // Language Switcher (TH / EN)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier
+                            .clickable { viewModel.toggleLanguage() }
+                            .testTag("button_toggle_language")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "TH",
+                                fontSize = 11.sp,
+                                fontWeight = if (state.language == AppLanguage.TH) FontWeight.Bold else FontWeight.Normal,
+                                color = if (state.language == AppLanguage.TH) DeepTealPrimary else SlateGreyMuted
+                            )
+                            Text(
+                                text = " | ",
+                                fontSize = 11.sp,
+                                color = SlateGreyMuted
+                            )
+                            Text(
+                                text = "EN",
+                                fontSize = 11.sp,
+                                fontWeight = if (state.language == AppLanguage.EN) FontWeight.Bold else FontWeight.Normal,
+                                color = if (state.language == AppLanguage.EN) DeepTealPrimary else SlateGreyMuted
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     // Current User Tier Chip
                     Surface(
                         shape = RoundedCornerShape(16.dp),
@@ -115,7 +154,7 @@ fun HealthPulseApp(
                             Text(state.myTier.emoji, fontSize = 14.sp)
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = state.myTier.shortName,
+                                text = if (state.language == AppLanguage.TH) state.myTier.shortName else state.myTier.name.replace("_", "/"),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = state.myTier.color
@@ -142,13 +181,45 @@ fun HealthPulseApp(
                             contentDescription = "Discovery"
                         )
                     },
-                    label = { Text(AppTab.DISCOVERY.title, fontSize = 11.sp) },
+                    label = { Text(AppStrings.tabDiscovery(state.language), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = WarmCoral,
                         selectedTextColor = WarmCoral,
                         indicatorColor = WarmCoralLight
                     ),
                     modifier = Modifier.testTag("tab_discovery")
+                )
+
+                NavigationBarItem(
+                    selected = state.currentTab == AppTab.CHATS,
+                    onClick = { viewModel.setTab(AppTab.CHATS) },
+                    icon = {
+                        val totalUnread = state.conversations.sumOf { it.unreadCount }
+                        if (totalUnread > 0) {
+                            BadgedBox(badge = {
+                                Badge(containerColor = WarmCoral) {
+                                    Text("$totalUnread", color = Color.White)
+                                }
+                            }) {
+                                Icon(
+                                    if (state.currentTab == AppTab.CHATS) Icons.Filled.ChatBubble else Icons.Outlined.ChatBubbleOutline,
+                                    contentDescription = "Chats"
+                                )
+                            }
+                        } else {
+                            Icon(
+                                if (state.currentTab == AppTab.CHATS) Icons.Filled.ChatBubble else Icons.Outlined.ChatBubbleOutline,
+                                contentDescription = "Chats"
+                            )
+                        }
+                    },
+                    label = { Text(AppStrings.tabChats(state.language), fontSize = 11.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = WarmCoral,
+                        selectedTextColor = WarmCoral,
+                        indicatorColor = WarmCoralLight
+                    ),
+                    modifier = Modifier.testTag("tab_chats")
                 )
 
                 NavigationBarItem(
@@ -160,7 +231,7 @@ fun HealthPulseApp(
                             contentDescription = "E-Vouchers"
                         )
                     },
-                    label = { Text(AppTab.MARKETPLACE.title, fontSize = 11.sp) },
+                    label = { Text(AppStrings.tabMarketplace(state.language), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = DeepTealPrimary,
                         selectedTextColor = DeepTealPrimary,
@@ -178,7 +249,7 @@ fun HealthPulseApp(
                             contentDescription = "My Badge"
                         )
                     },
-                    label = { Text(AppTab.MY_BADGE.title, fontSize = 11.sp) },
+                    label = { Text(AppStrings.tabMyBadge(state.language), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = DeepTealPrimary,
                         selectedTextColor = DeepTealPrimary,
@@ -196,7 +267,7 @@ fun HealthPulseApp(
                             contentDescription = "ZKV & FHIR"
                         )
                     },
-                    label = { Text(AppTab.ZKV_GATEWAY.title, fontSize = 11.sp) },
+                    label = { Text(AppStrings.tabZkvGateway(state.language), fontSize = 11.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = DeepTealDark,
                         selectedTextColor = DeepTealDark,
@@ -209,6 +280,11 @@ fun HealthPulseApp(
     ) { innerPadding ->
         when (state.currentTab) {
             AppTab.DISCOVERY -> DiscoveryScreen(
+                state = state,
+                viewModel = viewModel,
+                modifier = Modifier.padding(innerPadding)
+            )
+            AppTab.CHATS -> ChatScreen(
                 state = state,
                 viewModel = viewModel,
                 modifier = Modifier.padding(innerPadding)

@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.BadgeTier
 import com.example.ui.AppTab
 import com.example.ui.HealthPulseUiState
@@ -46,6 +48,7 @@ fun MyBadgeScreen(
                 lastTestDate = state.myLastTestDate,
                 hospitalName = state.myHospital,
                 daysRemaining = state.daysUntilTierDecay,
+                language = state.language,
                 onSimulateDecay = { viewModel.simulateTierDecay() },
                 onRestoreTier = { viewModel.restoreTierToSilver() },
                 onGoToMarketplace = { viewModel.setTab(AppTab.MARKETPLACE) }
@@ -54,13 +57,14 @@ fun MyBadgeScreen(
 
         // Section 2: Clinical Epidemiology Explanation of Tier Decay
         item {
-            TierDecayEpidemiologyCard()
+            TierDecayEpidemiologyCard(language = state.language)
         }
 
         // Section 3: Tier Guide & User Perks
         item {
             TierPerksGuideCard(
                 currentTier = state.myTier,
+                language = state.language,
                 onUpgradeTier = { viewModel.setTab(AppTab.MARKETPLACE) }
             )
         }
@@ -73,6 +77,7 @@ private fun MyTierStatusDecayCard(
     lastTestDate: String,
     hospitalName: String,
     daysRemaining: Int,
+    language: AppLanguage,
     onSimulateDecay: () -> Unit,
     onRestoreTier: () -> Unit,
     onGoToMarketplace: () -> Unit
@@ -91,12 +96,12 @@ private fun MyTierStatusDecayCard(
             ) {
                 Column {
                     Text(
-                        text = "สถานะสุขภาพและป้าย Badge ของฉัน",
+                        text = AppStrings.myHealthStatusTitle(language),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "อ้างอิงประวัติการตรวจในรอบ 6 เดือน",
+                        text = AppStrings.myHealthStatusSub(language),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -107,7 +112,7 @@ private fun MyTierStatusDecayCard(
                     color = tier.color.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = "${tier.emoji} ${tier.shortName}",
+                        text = "${tier.emoji} ${if (language == AppLanguage.TH) tier.shortName else tier.name.replace("_", "/")}",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
@@ -125,12 +130,12 @@ private fun MyTierStatusDecayCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "อายุของผลตรวจ (Tier Decay Clock)",
+                    text = AppStrings.tierDecayClock(language),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = if (daysRemaining > 0) "เหลือ $daysRemaining / 180 วัน" else "หมดอายุ (0 วัน)",
+                    text = AppStrings.daysRemaining(daysRemaining, language),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = if (daysRemaining > 30) SafeGreen else DangerRed
@@ -153,13 +158,16 @@ private fun MyTierStatusDecayCard(
 
             if (tier != BadgeTier.UNVERIFIED) {
                 Text(
-                    text = "🏥 ตรวจยืนยันเมื่อ $lastTestDate ที่ $hospitalName",
+                    text = "🏥 ${AppStrings.verifiedAt(hospitalName, lastTestDate, language)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text(
-                    text = "⚠️ สถานะปัจจุบัน: Unverified เนื่องจากยังไม่ตรวจหรือผลตรวจเดิมเกิน 180 วันแล้ว",
+                    text = if (language == AppLanguage.TH)
+                        "⚠️ สถานะปัจจุบัน: Unverified เนื่องจากยังไม่ตรวจหรือผลตรวจเดิมเกิน 180 วันแล้ว"
+                    else
+                        "⚠️ Status: Unverified due to unperformed screening or expired beyond 180 days",
                     style = MaterialTheme.typography.bodySmall,
                     color = DangerRed
                 )
@@ -177,7 +185,7 @@ private fun MyTierStatusDecayCard(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = WarmCoral)
                 ) {
-                    Text("จำลอง Badge หมดอายุ", fontSize = 11.sp)
+                    Text(AppStrings.simulateDecayButton(language), fontSize = 11.sp)
                 }
 
                 Button(
@@ -185,7 +193,7 @@ private fun MyTierStatusDecayCard(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = DeepTealPrimary)
                 ) {
-                    Text("ต่ออายุตรวจซ้ำ", fontSize = 11.sp, color = Color.White)
+                    Text(AppStrings.renewTestButton(language), fontSize = 11.sp, color = Color.White)
                 }
             }
 
@@ -205,14 +213,14 @@ private fun MyTierStatusDecayCard(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("ตรวจสุขภาพเพื่ออัปเกรด Badge กับ รพ. พันธมิตร", fontSize = 12.sp, color = Color.White)
+                Text(AppStrings.upgradeBadgeAction(language), fontSize = 12.sp, color = Color.White)
             }
         }
     }
 }
 
 @Composable
-private fun TierDecayEpidemiologyCard() {
+private fun TierDecayEpidemiologyCard(language: AppLanguage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -228,7 +236,7 @@ private fun TierDecayEpidemiologyCard() {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "หลักการทางระบาดวิทยา: ทำไมต้องมี Tier Decay?",
+                    text = AppStrings.decayWhyTitle(language),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -238,9 +246,7 @@ private fun TierDecayEpidemiologyCard() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "1. พฤติกรรมทางเพศเปลี่ยนแปลงตามกาลเวลา ผลตรวจเลือดในอดีตไม่สามารถรับประกันความเสี่ยงในปัจจุบันได้\n" +
-                        "2. คำแนะนำของ CDC (ศูนย์ควบคุมโรคสหรัฐฯ) กำหนดให้ผู้มีเพศสัมพันธ์คัดกรองทุก 3-6 เดือน\n" +
-                        "3. กลไก 180-Day Decay ช่วยรักษาความน่าเชื่อถือและความปลอดภัยสูงสุดของคอมมูนิตี้ Safe Date",
+                text = AppStrings.decayWhyBody(language),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFFE2E8F0),
                 lineHeight = 18.sp
@@ -252,6 +258,7 @@ private fun TierDecayEpidemiologyCard() {
 @Composable
 private fun TierPerksGuideCard(
     currentTier: BadgeTier,
+    language: AppLanguage,
     onUpgradeTier: () -> Unit
 ) {
     Card(
@@ -270,7 +277,7 @@ private fun TierPerksGuideCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "ระดับ Badge และสิทธิประโยชน์บน Safe Date",
+                    text = AppStrings.badgeTiersAndPerks(language),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -298,7 +305,7 @@ private fun TierPerksGuideCard(
                                 Text(tier.emoji, fontSize = 18.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = tier.title,
+                                    text = tier.getLocalizedTitle(language),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isMyCurrentTier) tier.color else MaterialTheme.colorScheme.onSurface
@@ -310,7 +317,7 @@ private fun TierPerksGuideCard(
                                     color = tier.color
                                 ) {
                                     Text(
-                                        text = "ระดับของคุณ",
+                                        text = AppStrings.yourCurrentTier(language),
                                         color = Color.White,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
@@ -322,14 +329,14 @@ private fun TierPerksGuideCard(
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = tier.description,
+                            text = tier.getLocalizedDescription(language),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "✨ สิทธิประโยชน์: ${tier.perkSummary}",
+                            text = "✨ ${if (language == AppLanguage.TH) "สิทธิประโยชน์" else "Perks"}: ${tier.getLocalizedPerk(language)}",
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface

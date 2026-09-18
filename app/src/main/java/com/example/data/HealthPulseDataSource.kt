@@ -2,6 +2,8 @@ package com.example.data
 
 import androidx.compose.ui.graphics.Color
 import com.example.model.BadgeTier
+import com.example.model.ChatConversation
+import com.example.model.ChatMessage
 import com.example.model.EVoucherPackage
 import com.example.model.PartnerHospital
 import com.example.model.UserProfile
@@ -208,4 +210,75 @@ object HealthPulseDataSource {
             isZkvActive = true
         )
     )
+
+    val initialConversations: List<ChatConversation> = listOf(
+        ChatConversation(
+            conversationId = "conv_p1",
+            partnerProfile = mockProfiles[0], // หมอแพรว
+            messages = listOf(
+                ChatMessage(
+                    id = "msg_sys_1",
+                    senderId = "system",
+                    text = "🔒 Mutual Health Verification: คุณและหมอแพรวต่างผ่านการยืนยันผลตรวจระดับ Gold/Platinum จาก รพ.บำรุงราษฎร์ & BDMS Wellness Clinic ปลอดภัย 100%",
+                    timestamp = "10:30",
+                    isFromMe = false,
+                    isSystemSafetyCard = true
+                ),
+                ChatMessage(
+                    id = "msg_1",
+                    senderId = "p1",
+                    text = "สวัสดีค่ะคุณ! ดีใจที่ได้แมตช์นะคะ หายากมากที่จะเจอคนที่ใส่ใจสุขภาพและตรวจครบแพ็กเกจเหมือนกัน 😊",
+                    timestamp = "10:32",
+                    isFromMe = false
+                ),
+                ChatMessage(
+                    id = "msg_2",
+                    senderId = "me",
+                    text = "สวัสดีครับคุณหมอแพรว! ยินดีมากๆ ครับ เห็นในโปรไฟล์บอกว่าชอบวิ่งมาราธอน ซ้อมที่ไหนเป็นประจำเหรอครับ? 🏃",
+                    timestamp = "10:35",
+                    isFromMe = true
+                ),
+                ChatMessage(
+                    id = "msg_3",
+                    senderId = "p1",
+                    text = "ปกติชอบไปวิ่งที่สวนเบญจกิติช่วงเย็นๆ ค่ะ ลมเย็นสบายดี ถ้าว่างช่วงสุดสัปดาห์ชวนไปวิ่งหรือจิบกาแฟ Specialty ได้นะคะ ☕✨",
+                    timestamp = "10:38",
+                    isFromMe = false
+                )
+            ),
+            unreadCount = 1,
+            matchedDate = "เมื่อวานนี้"
+        ),
+        ChatConversation(
+            conversationId = "conv_p3",
+            partnerProfile = mockProfiles[2], // มายด์
+            messages = listOf(
+                ChatMessage(
+                    id = "msg_sys_2",
+                    senderId = "system",
+                    text = "🔒 Mutual Health Verification: คุณและมายด์ได้รับการตรวจยืนยันสุขภาพจาก Pulse Clinic Siam (Silver Tier)",
+                    timestamp = "14:10",
+                    isFromMe = false,
+                    isSystemSafetyCard = true
+                ),
+                ChatMessage(
+                    id = "msg_4",
+                    senderId = "p3",
+                    text = "สวัสดีค่า! ชอบรูปถ่ายกล้องฟิล์มในโปรไฟล์มากเลย โทนสีสวยมาก 🌿📷",
+                    timestamp = "14:15",
+                    isFromMe = false
+                ),
+                ChatMessage(
+                    id = "msg_5",
+                    senderId = "me",
+                    text = "ขอบคุณมากครับคุณมายด์! แถวอารีย์มีคาเฟ่แสงสวยๆ เพียบเลย ไว้นัดไปถ่ายรูปเล่นกันครับ",
+                    timestamp = "14:20",
+                    isFromMe = true
+                )
+            ),
+            unreadCount = 0,
+            matchedDate = "2 วันที่แล้ว"
+        )
+    )
 }
+

@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.BadgeTier
 import com.example.model.EVoucherPackage
 import com.example.model.PartnerHospital
@@ -47,12 +49,12 @@ fun MarketplaceScreen(
     ) {
         // Value Proposition Banner
         item {
-            EcosystemValueBanner()
+            EcosystemValueBanner(language = state.language)
         }
 
         // Compliance Notice (Thai Medical Council No Brokerage Fee)
         item {
-            MedicalCouncilComplianceCard()
+            MedicalCouncilComplianceCard(language = state.language)
         }
 
         // Section Title: Available Packages
@@ -69,7 +71,7 @@ fun MarketplaceScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "แพ็กเกจตรวจคัดกรองสุขภาพทางเพศ (E-Vouchers)",
+                    text = AppStrings.marketplacePackagesSection(state.language),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -80,6 +82,7 @@ fun MarketplaceScreen(
         items(state.packages) { pkg ->
             EVoucherPackageCard(
                 pkg = pkg,
+                language = state.language,
                 onSelectBuy = { viewModel.openPurchaseDialog(pkg) }
             )
         }
@@ -99,7 +102,7 @@ fun MarketplaceScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "เครือข่ายสถานพยาบาลพันธมิตร (HIS Connected)",
+                    text = AppStrings.marketplaceHospitalsSection(state.language),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -108,7 +111,7 @@ fun MarketplaceScreen(
 
         // Hospital Cards
         items(state.partnerHospitals) { hospital ->
-            HospitalPartnerCard(hospital = hospital)
+            HospitalPartnerCard(hospital = hospital, language = state.language)
         }
     }
 
@@ -118,6 +121,7 @@ fun MarketplaceScreen(
             pkg = pkg,
             hospitals = state.partnerHospitals,
             selectedHospital = state.selectedHospitalForPurchase,
+            language = state.language,
             onSelectHospital = { viewModel.selectHospital(it) },
             onConfirm = { viewModel.confirmPurchaseVoucher() },
             onDismiss = { viewModel.dismissPurchaseDialog() }
@@ -128,13 +132,14 @@ fun MarketplaceScreen(
     if (state.showVoucherQrDialog && state.activePurchasedVoucher != null) {
         VoucherQrTokenDialog(
             voucher = state.activePurchasedVoucher,
+            language = state.language,
             onDismiss = { viewModel.dismissVoucherQrDialog() }
         )
     }
 }
 
 @Composable
-private fun EcosystemValueBanner() {
+private fun EcosystemValueBanner(language: AppLanguage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -159,13 +164,13 @@ private fun EcosystemValueBanner() {
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "เปลี่ยนงบ Subscription สู่สุขภาพจริง",
+                        text = AppStrings.ecosystemBannerTitle(language),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "จาก Subscription Fatigue สู่ Health Gamification",
+                        text = AppStrings.ecosystemBannerSub(language),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF94A3B8)
                     )
@@ -175,7 +180,7 @@ private fun EcosystemValueBanner() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "แทนที่จะจ่ายค่าสมาชิกแอปรายเดือนโดยเปล่าประโยชน์ Safe Date ให้คุณเปลี่ยนเป็น E-Voucher ตรวจเลือดที่โรงพยาบาล พร้อมปลดล็อกป้าย Verified Badge สัญลักษณ์แห่งความใส่ใจและความรับผิดชอบต่อคู่เดต",
+                text = AppStrings.ecosystemBannerBody(language),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFFE2E8F0),
                 lineHeight = 18.sp
@@ -185,7 +190,7 @@ private fun EcosystemValueBanner() {
 }
 
 @Composable
-private fun MedicalCouncilComplianceCard() {
+private fun MedicalCouncilComplianceCard(language: AppLanguage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -207,14 +212,14 @@ private fun MedicalCouncilComplianceCard() {
             Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
-                    text = "สอดคล้องข้อบังคับแพทยสภา (No Brokerage Fee)",
+                    text = AppStrings.medicalCouncilTitle(language),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = DeepTealDark
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = "โครงสร้างรายได้โปร่งใสผ่านโมเดล E-Voucher Marketplace และ B2B SaaS Platform Fee ไม่มีการคิดค่านายหน้าหรือส่วนแบ่งค่ารักษาพยาบาลวิชาชีพเวชกรรมตามกฎหมายไทย",
+                    text = AppStrings.medicalCouncilBody(language),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 15.sp
@@ -227,6 +232,7 @@ private fun MedicalCouncilComplianceCard() {
 @Composable
 private fun EVoucherPackageCard(
     pkg: EVoucherPackage,
+    language: AppLanguage,
     onSelectBuy: () -> Unit
 ) {
     Card(
@@ -248,7 +254,7 @@ private fun EVoucherPackageCard(
                     color = pkg.badgeTierUnlocked.color.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = pkg.tag,
+                        text = if (language == AppLanguage.TH) pkg.tag else pkg.badgeTierUnlocked.name.replace("_", "/"),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
@@ -285,7 +291,7 @@ private fun EVoucherPackageCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = pkg.turnaroundTime,
+                    text = if (language == AppLanguage.TH) pkg.turnaroundTime else "Results in 2-4 hrs (Express)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -333,12 +339,12 @@ private fun EVoucherPackageCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "ค่าแล็บสถานพยาบาล: ฿${String.format("%,d", pkg.wholesalePriceThb)}",
+                        text = "${AppStrings.costLab(language)}: ฿${String.format("%,d", pkg.wholesalePriceThb)}",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Platform Fee: ฿${String.format("%,d", pkg.platformFeeThb)}",
+                        text = "${AppStrings.platformFee(language)}: ฿${String.format("%,d", pkg.platformFeeThb)}",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -362,7 +368,7 @@ private fun EVoucherPackageCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "ซื้อ E-Voucher และรับสิทธิ์ ${pkg.badgeTierUnlocked.shortName}",
+                    text = "${AppStrings.buyVoucherButton(language)} (${pkg.badgeTierUnlocked.getLocalizedTitle(language)})",
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -371,7 +377,7 @@ private fun EVoucherPackageCard(
 }
 
 @Composable
-private fun HospitalPartnerCard(hospital: PartnerHospital) {
+private fun HospitalPartnerCard(hospital: PartnerHospital, language: AppLanguage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -443,6 +449,7 @@ private fun PurchaseConfirmationDialog(
     pkg: EVoucherPackage,
     hospitals: List<PartnerHospital>,
     selectedHospital: PartnerHospital,
+    language: AppLanguage,
     onSelectHospital: (PartnerHospital) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
@@ -462,7 +469,7 @@ private fun PurchaseConfirmationDialog(
                     .padding(20.dp)
             ) {
                 Text(
-                    text = "ยืนยันการซื้อ E-Voucher",
+                    text = AppStrings.confirmPurchaseTitle(language),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -477,7 +484,7 @@ private fun PurchaseConfirmationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "เลือกสถานพยาบาลที่จะเข้ารับการตรวจ:",
+                    text = AppStrings.selectHospitalLabel(language),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -529,7 +536,7 @@ private fun PurchaseConfirmationDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "ยอดชำระสุทธิ:",
+                        text = AppStrings.totalPayment(language),
                         style = MaterialTheme.typography.titleSmall
                     )
                     Text(
@@ -550,7 +557,7 @@ private fun PurchaseConfirmationDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("ยกเลิก")
+                        Text(AppStrings.cancel(language))
                     }
                     Button(
                         onClick = onConfirm,
@@ -559,7 +566,7 @@ private fun PurchaseConfirmationDialog(
                             .testTag("confirm_purchase_button"),
                         colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary)
                     ) {
-                        Text("ชำระเงินและรับคูปอง")
+                        Text(AppStrings.payAndGetVoucher(language))
                     }
                 }
             }
@@ -570,6 +577,7 @@ private fun PurchaseConfirmationDialog(
 @Composable
 private fun VoucherQrTokenDialog(
     voucher: PurchasedVoucher,
+    language: AppLanguage,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -588,7 +596,7 @@ private fun VoucherQrTokenDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "🎉 ออก E-Voucher สำเร็จ!",
+                    text = AppStrings.voucherSuccessTitle(language),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = SafeGreen
@@ -604,7 +612,7 @@ private fun VoucherQrTokenDialog(
                 )
 
                 Text(
-                    text = "สถานพยาบาล: ${voucher.hospitalName}",
+                    text = "${if (language == AppLanguage.TH) "สถานพยาบาล" else "Hospital"}: ${voucher.hospitalName}",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF94A3B8)
                 )
@@ -642,7 +650,7 @@ private fun VoucherQrTokenDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "แสดง QR Code นี้ต่อเจ้าหน้าที่เคาน์เตอร์เวชระเบียนของสถานพยาบาล เมื่อผลแล็บเสร็จสิ้น ระบบจะอัปเดต Verified Badge โดยอัตโนมัติผ่าน Zero-Knowledge Verification",
+                    text = AppStrings.voucherInstructions(language),
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                     color = Color(0xFFE2E8F0),
                     textAlign = TextAlign.Center,
@@ -656,7 +664,7 @@ private fun VoucherQrTokenDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = PulsePrimary),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("รับทราบ & กลับสู่แอป")
+                    Text(AppStrings.acknowledgeAndReturn(language))
                 }
             }
         }

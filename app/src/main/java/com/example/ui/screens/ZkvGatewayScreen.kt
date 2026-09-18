@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.model.AppLanguage
+import com.example.model.AppStrings
 import com.example.model.PartnerHospital
 import com.example.model.ZkvVerificationLog
 import com.example.ui.HealthPulseUiState
@@ -42,7 +44,7 @@ fun ZkvGatewayScreen(
     ) {
         // Architectural Intro Card
         item {
-            ZkvArchitectureIntroCard()
+            ZkvArchitectureIntroCard(language = state.language)
         }
 
         // PDPA Compliance Gateway
@@ -50,6 +52,7 @@ fun ZkvGatewayScreen(
             PdpaConsentGatewayCard(
                 explicitConsent = state.pdpaExplicitConsentChecked,
                 dataMinimization = state.pdpaDataMinimizationChecked,
+                language = state.language,
                 onToggleExplicit = { viewModel.togglePdpaConsent(it) },
                 onToggleMinimization = { viewModel.toggleDataMinimization(it) }
             )
@@ -63,20 +66,21 @@ fun ZkvGatewayScreen(
                 onSelectHospital = { viewModel.selectFhirHospital(it) },
                 isVerifying = state.isZkvVerifying,
                 canRun = state.pdpaExplicitConsentChecked && state.pdpaDataMinimizationChecked,
+                language = state.language,
                 onRunVerification = { viewModel.runZkvVerification() }
             )
         }
 
         // Live JSON Payload Comparison
         item {
-            JsonPayloadComparisonCard(zkvLog = state.zkvResult)
+            JsonPayloadComparisonCard(zkvLog = state.zkvResult, language = state.language)
         }
 
         // Audit Logs Timeline
         if (state.fhirVerificationLogs.isNotEmpty()) {
             item {
                 Text(
-                    text = "ประวัติการตรวจสอบย้อนหลัง (Audit Log - No PHI)",
+                    text = AppStrings.auditLogsSectionTitle(state.language),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -90,7 +94,7 @@ fun ZkvGatewayScreen(
 }
 
 @Composable
-private fun ZkvArchitectureIntroCard() {
+private fun ZkvArchitectureIntroCard(language: AppLanguage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -115,13 +119,13 @@ private fun ZkvArchitectureIntroCard() {
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "HL7 FHIR & Zero-Knowledge Verification",
+                        text = AppStrings.zkvArchitectureTitle(language),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "Technical Architecture & Privacy Compliance",
+                        text = AppStrings.zkvArchitectureSub(language),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF94A3B8)
                     )
@@ -131,7 +135,7 @@ private fun ZkvArchitectureIntroCard() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Safe Date ปฏิเสธวิธีอัปโหลดภาพถ่ายเอกสารผลแล็บเพราะเสี่ยงต่อการปลอมแปลง (Document Tampering) เราเชื่อมตรงกับระบบ HIS โรงพยาบาลผ่านมาตรฐาน HL7 FHIR API และเทคโนโลยี ZKV โดยโรงพยาบาลประมวลผลแล้วส่งกลับมาเพียงค่า Boolean Logic เซิร์ฟเวอร์ของแอปจึงไม่เคยจัดเก็บข้อมูลเวชระเบียนของผู้ใช้แม้แต่บรรทัดเดียว",
+                text = AppStrings.zkvArchitectureDesc(language),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFFE2E8F0),
                 lineHeight = 18.sp
@@ -144,6 +148,7 @@ private fun ZkvArchitectureIntroCard() {
 private fun PdpaConsentGatewayCard(
     explicitConsent: Boolean,
     dataMinimization: Boolean,
+    language: AppLanguage,
     onToggleExplicit: (Boolean) -> Unit,
     onToggleMinimization: (Boolean) -> Unit
 ) {
@@ -163,7 +168,7 @@ private fun PdpaConsentGatewayCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "PDPA Consent Gateway (มาตรา 26 ข้อมูลอ่อนไหว)",
+                    text = AppStrings.pdpaConsentTitle(language),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -183,7 +188,7 @@ private fun PdpaConsentGatewayCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "ข้าพเจ้ายินยอมโดยชัดแจ้ง (Explicit Consent) ให้ Safe Date ดึงสถานะ Boolean จาก HIS เพื่อแสดง Verified Badge",
+                    text = AppStrings.explicitConsentDesc(language),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -200,7 +205,7 @@ private fun PdpaConsentGatewayCard(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "รับทราบหลักการ Data Minimization: แอปจะไม่เข้าถึง ไม่ส่งต่อ และไม่บันทึกค่าผลแล็บละเอียดใดๆ ทั้งสิ้น",
+                    text = AppStrings.dataMinimizationDesc(language),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -215,6 +220,7 @@ private fun FhirSimulatorCard(
     onSelectHospital: (PartnerHospital) -> Unit,
     isVerifying: Boolean,
     canRun: Boolean,
+    language: AppLanguage,
     onRunVerification: () -> Unit
 ) {
     Card(
@@ -225,13 +231,13 @@ private fun FhirSimulatorCard(
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
-                text = "จำลองการทดสอบ HL7 FHIR Interoperability",
+                text = AppStrings.fhirSimTitle(language),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "เลือกสถานพยาบาลเป้าหมายเพื่อทำ Handshake ผ่าน OAuth 2.0:",
+                text = AppStrings.fhirSimSub(language),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -294,7 +300,7 @@ private fun FhirSimulatorCard(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("กำลังเชื่อมต่อ HIS & ประมวลผล ZKV...", color = Color.White)
+                    Text(AppStrings.zkvVerifyingState(language), color = Color.White)
                 } else {
                     Icon(
                         Icons.Filled.Sensors,
@@ -303,7 +309,7 @@ private fun FhirSimulatorCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("ยิงคำขอ FHIR Observation (ZKV Handshake)", color = Color.White)
+                    Text(AppStrings.zkvRunAction(language), color = Color.White)
                 }
             }
         }
@@ -311,7 +317,7 @@ private fun FhirSimulatorCard(
 }
 
 @Composable
-private fun JsonPayloadComparisonCard(zkvLog: ZkvVerificationLog?) {
+private fun JsonPayloadComparisonCard(zkvLog: ZkvVerificationLog?, language: AppLanguage) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -319,14 +325,14 @@ private fun JsonPayloadComparisonCard(zkvLog: ZkvVerificationLog?) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "ZKV Data Minimization Showcase",
+                text = AppStrings.zkvShowcaseTitle(language),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "เปรียบเทียบข้อมูลภายใน รพ. (PHI) กับข้อมูลที่ส่งมา Dating App (ZKV)",
+                text = AppStrings.zkvShowcaseSub(language),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                 color = Color(0xFF94A3B8)
             )
@@ -341,7 +347,7 @@ private fun JsonPayloadComparisonCard(zkvLog: ZkvVerificationLog?) {
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
                     Text(
-                        text = "🔒 ภายใน Hospital Secure Perimeter (ห้ามส่งออก):",
+                        text = AppStrings.hospitalPerimeterLabel(language),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = DangerRed
@@ -376,7 +382,7 @@ private fun JsonPayloadComparisonCard(zkvLog: ZkvVerificationLog?) {
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
                     Text(
-                        text = "✅ สิ่งที่ส่งกลับมา HealthPulse Dating (Zero-Knowledge):",
+                        text = AppStrings.sanitizedZkvLabel(language),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = SafeGreen
@@ -450,3 +456,4 @@ private fun AuditLogItemCard(log: ZkvVerificationLog) {
         }
     }
 }
+

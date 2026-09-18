@@ -17,6 +17,7 @@ val WarmCoralLight = Color(0xFFFFE4E6)
 
 // Neutral, Backgrounds & Surfaces
 val WarmCreamBackground = Color(0xFFFAF8F5) // ครีมอุ่น: ผ่อนคลาย ละมุนตา ไม่แข็งกระด้าง
+val WarmCreamSurface = Color(0xFFFAF8F5)    // พื้นผิววอร์มครีม
 val PureWhiteSurface = Color(0xFFFFFFFF)    // การ์ดโปรไฟล์ ตัวเลือกเมนู
 val SoftSandCard = Color(0xFFF5F2EB)        // พื้นผิวรอง / กรอบตัวเลือก
 

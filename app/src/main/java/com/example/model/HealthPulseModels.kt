@@ -13,7 +13,7 @@ enum class BadgeTier(
     val perkSummary: String
 ) {
     UNVERIFIED(
-        title = "Unverified Tier",
+        title = "Unverified",
         shortName = "ยังไม่ตรวจ",
         emoji = "⚪",
         color = TierUnverifiedColor,
@@ -47,7 +47,28 @@ enum class BadgeTier(
         bgColor = TierGoldBg,
         description = "ตรวจ PCR Multiplex DNA (14–28 เชื้อ) + ฉีดวัคซีน HPV ครบโดส",
         perkSummary = "Priority Match อันดับแรกสุด + กรอบโปรไฟล์ทองคำ + ส่วนลดคลินิกพันธมิตร"
-    )
+    );
+
+    fun getLocalizedTitle(lang: AppLanguage): String = when (this) {
+        UNVERIFIED -> if (lang == AppLanguage.TH) "ยังไม่ตรวจยืนยัน" else "Unverified"
+        BRONZE -> if (lang == AppLanguage.TH) "ระดับ Bronze" else "Bronze Tier"
+        SILVER -> if (lang == AppLanguage.TH) "ระดับ Silver" else "Silver Tier"
+        GOLD_PLATINUM -> if (lang == AppLanguage.TH) "ระดับ Gold / Platinum" else "Gold / Platinum Tier"
+    }
+
+    fun getLocalizedDescription(lang: AppLanguage): String = when (this) {
+        UNVERIFIED -> if (lang == AppLanguage.TH) description else "New member or clinical screening expired (> 6 months)."
+        BRONZE -> if (lang == AppLanguage.TH) description else "Basic STI screen (HIV Ag/Ab, Syphilis) within 6 months."
+        SILVER -> if (lang == AppLanguage.TH) description else "CDC-recommended routine check every 3–6 months."
+        GOLD_PLATINUM -> if (lang == AppLanguage.TH) description else "PCR Multiplex DNA (14–28 targets) + HPV vaccination course."
+    }
+
+    fun getLocalizedPerk(lang: AppLanguage): String = when (this) {
+        UNVERIFIED -> if (lang == AppLanguage.TH) perkSummary else "Standard discovery, 10 daily likes, badge details hidden."
+        BRONZE -> if (lang == AppLanguage.TH) perkSummary else "Unlimited likes & unlimited profile rewind unlocked."
+        SILVER -> if (lang == AppLanguage.TH) perkSummary else "2x Discovery Boost & filter for verified members only."
+        GOLD_PLATINUM -> if (lang == AppLanguage.TH) perkSummary else "Priority matchmaking placement, verified frame & clinic discounts."
+    }
 }
 
 data class UserProfile(
@@ -112,3 +133,22 @@ data class ZkvVerificationLog(
     val windowPeriodDisclaimer: String,
     val latencyMs: Long
 )
+
+data class ChatMessage(
+    val id: String,
+    val senderId: String,
+    val text: String,
+    val timestamp: String,
+    val isFromMe: Boolean,
+    val isSystemSafetyCard: Boolean = false,
+    val isSafeDateProposal: Boolean = false
+)
+
+data class ChatConversation(
+    val conversationId: String,
+    val partnerProfile: UserProfile,
+    val messages: List<ChatMessage>,
+    val unreadCount: Int = 0,
+    val matchedDate: String
+)
+
