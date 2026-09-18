@@ -1,0 +1,6 @@
+{
+  "name": "Safe Date",
+  "description": "Safe Date - Dating app integrated with hospital health verification, clinical STI screening e-vouchers, and zero-knowledge privacy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
