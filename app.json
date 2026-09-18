@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "SafeDate",
+    "slug": "safedate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "safedate",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FAF8F5",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0F766E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.safedate.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ใช้กล้องเพื่อถ่ายรูปโปรไฟล์และสแกนเอกสารผลตรวจ",
+        "NSPhotoLibraryUsageDescription": "ใช้เลือกรูปโปรไฟล์จากคลังภาพ",
+        "NSLocationWhenInUseUsageDescription": "ใช้ระยะทางโดยประมาณเพื่อแนะนำคนใกล้เคียง"
+      }
+    },
+    "android": {
+      "package": "com.safedate.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F766E"
+      },
+      "permissions": ["CAMERA", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
